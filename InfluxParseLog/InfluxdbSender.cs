@@ -9,12 +9,12 @@ namespace ru.pflb.InfluxParseLog
     class InfluxdbSender
     {
         private readonly string database;
-        private readonly string connectionString;
+        private readonly string serverBaseAddress;
 
         public InfluxdbSender(string influxdbUrl, string database)
         {
             this.database = database;
-            connectionString = influxdbUrl;
+            serverBaseAddress = influxdbUrl;
         }
 
         public Task<LineProtocolWriteResult> WriteAsync(LineProtocolPayload source, CancellationToken cancellationToken = default)
@@ -24,7 +24,7 @@ namespace ru.pflb.InfluxParseLog
                 return Task.FromResult(new LineProtocolWriteResult(true, string.Empty));
             }
 
-            var client = new LineProtocolClient(new Uri(connectionString), database);
+            var client = new LineProtocolClient(new Uri(serverBaseAddress), database);
 
             return client.WriteAsync(source, cancellationToken);
         }

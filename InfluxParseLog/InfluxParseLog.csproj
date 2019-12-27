@@ -19,6 +19,7 @@
   <ItemGroup>
     <PackageReference Include="InfluxDB.LineProtocol" Version="1.1.0" />
     <PackageReference Include="NLog" Version="4.6.8" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

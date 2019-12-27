@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Configuration;
 
 namespace ru.pflb.InfluxParseLog
 {
@@ -12,9 +13,9 @@ namespace ru.pflb.InfluxParseLog
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         // The ConnectionString used to decide which database to connect to:
-        private static readonly string ConnectionString = "http://localhost:8086";
+        private static string serverBaseAddress = "http://localhost:8086";
 
-        private static readonly string Database = "TestC";
+        private static string database = "TestC";
 
         static void Main(string[] args)
         {
@@ -22,15 +23,15 @@ namespace ru.pflb.InfluxParseLog
 
             LogManager.Configuration = new XmlLoggingConfiguration("nlog.config");
 
+            serverBaseAddress = ConfigurationManager.AppSettings.Get("influxServerBaseAddress");
+            database = ConfigurationManager.AppSettings.Get("influxDatabase");
+
             ProcessLog();
 
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
 
-            if (log.IsInfoEnabled)
-            {
-                log.Info("Importing logs for influxdb has finished. Excecution time: " + elapsedMs + " ms");
-            }
+            log.Info("Importing logs for influxdb has finished. Excecution time: " + elapsedMs + " ms");
         }
 
         private static void ProcessLog()
@@ -46,12 +47,9 @@ namespace ru.pflb.InfluxParseLog
 
         private static void ProcessLog(string logFilePath)
         {
-            if (log.IsInfoEnabled)
-            {
-                log.Info($"Processing File: {logFilePath}");
-            }
+            log.Info($"Processing File: {logFilePath}");
 
-            var influx = new InfluxdbSender(ConnectionString, Database);
+            var influx = new InfluxdbSender(serverBaseAddress, database);
             var parser = new LogParser(10000);
 
             string line;
@@ -78,10 +76,7 @@ namespace ru.pflb.InfluxParseLog
                     // Log all unsuccessful writes, but do not quit execution:
                     if (!result.Success)
                     {
-                        if (log.IsErrorEnabled)
-                        {
-                            log.Error(result.ErrorMessage);
-                        }
+                        log.Error(result.ErrorMessage);
                     }
                 }
                 catch (Exception e)
@@ -89,10 +84,7 @@ namespace ru.pflb.InfluxParseLog
                     // Some Pokemon Exception Handling here. I am seeing TaskCanceledExceptions with the 
                     // InfluxDB .NET Client. At the same time I do not want to quit execution, because 
                     // some batches fail:
-                    if (log.IsErrorEnabled)
-                    {
-                        log.Error(e, "Error occured writing InfluxDB Payload");
-                    }
+                    log.Error(e, "Error occured writing InfluxDB Payload");
                 }
             }
         }
